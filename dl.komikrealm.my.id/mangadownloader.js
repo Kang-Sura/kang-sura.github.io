@@ -1,9 +1,4 @@
-<html>
-<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-<head>
-        <title>LOGIN</title>
-        <style>
-            @import url(../external.html?link=https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700|Open+Sans:400,300,600);
+@import url(../external.html?link=https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700|Open+Sans:400,300,600);
             * {
               box-sizing: border-box;
             }
@@ -109,17 +104,3 @@
             .log-form .forgot:hover {
               color: #1ba0a9;
             }
-        </style>
-    </head>
-    <body>
-        <div class="log-form">
-          <h2>Login to your account</h2>
-          <form action="../external.html?link=https://dl.kiryuu.id/?page=user/verify" method="POST">
-            <input type="hidden" name="token" value="16825379718363" /><br />
-            <input type="text" name="username" value="" placeholder="Username" /><br />
-            <input type="password" name="password" value="" placeholder="Password" /><br />
-            <input class="btn" type="submit" name="dologin" value="Login" />
-        </form>
-        </div>
-    </body>
-</html>
