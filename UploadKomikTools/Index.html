@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Komik ke Blogger</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #drop-area { border: 2px dashed #ccc; padding: 20px; text-align: center; }
+    #preview img { max-width: 100px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+<h2>Upload Komik ke Blogger</h2>
+
+<button id="auth">Login dengan Google</button>
+<div id="drop-area">
+  <p>Drag & drop gambar komik ke sini</p>
+  <input type="file" id="fileElem" multiple accept="image/*">
+</div>
+
+<div id="preview"></div>
+<button id="uploadBtn">Upload & Posting</button>
+
+<script>
+const clientId = 'YOUR_CLIENT_ID_HERE';
+const redirectUri = 'http://localhost'; // atau link host kamu
+const scope = 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/drive.file';
+let token = null;
+
+document.getElementById('auth').onclick = () => {
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
+  window.location.href = url;
+};
+
+// Ambil token dari URL setelah login
+if (window.location.hash.includes('access_token')) {
+  const params = new URLSearchParams(window.location.hash.substring(1));
+  token = params.get('access_token');
+  document.getElementById('auth').textContent = 'Terautentikasi';
+}
+
+let files = [];
+document.getElementById('fileElem').addEventListener('change', (e) => {
+  files = Array.from(e.target.files);
+  const preview = document.getElementById('preview');
+  preview.innerHTML = '';
+  files.forEach((file, index) => {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    preview.appendChild(img);
+  });
+});
+
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  if (!token || files.length === 0) return alert('Login dulu dan pilih file');
+
+  let htmlContent = '';
+  for (let i = 0; i < files.length; i++) {
+    const form = new FormData();
+    form.append('file', files[i]);
+    const upload = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: form
+    });
+    const meta = await upload.json();
+    const fileId = meta.id;
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' })
+    });
+    htmlContent += `<img src="https://drive.google.com/uc?id=${fileId}"><br>`;
+  }
+
+  const blogId = 'YOUR_BLOG_ID_HERE';
+  const postRes = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: 'Komik Baru',
+      content: htmlContent
+    })
+  });
+
+  const result = await postRes.json();
+  alert(`Sukses! Diposting di: ${result.url}`);
+});
+</script>
+
+</body>
+</html>
