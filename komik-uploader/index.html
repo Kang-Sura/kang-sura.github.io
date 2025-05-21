@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Uploader Komik ke Blogger v1.2</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <h1>Uploader Komik ke Blogger v1.2</h1>
+
+  <div class="controls">
+    <button id="auth">Login Google</button>
+    <button id="toggleDark">Dark Mode</button>
+  </div>
+
+  <input type="file" id="fileElem" multiple accept=".jpg,.jpeg,.png,.zip" />
+  <div id="drop-area">
+    <p>Drag & Drop gambar atau file ZIP di sini</p>
+  </div>
+
+  <div id="preview"></div>
+
+  <label>Judul Postingan: <input type="text" id="judul" /></label><br />
+  <label>Label (pisahkan dengan koma): <input type="text" id="label" /></label><br />
+
+  <label>Format Output:
+    <select id="format">
+      <option value="url">URL</option>
+      <option value="html">HTML &lt;img&gt;</option>
+      <option value="md">Markdown</option>
+    </select>
+  </label><br />
+
+  <button id="uploadBtn">Upload ke Blogger</button>
+
+  <h3>Log Upload:</h3>
+  <div id="log"></div>
+
+  <h3>Semua Link:</h3>
+  <textarea id="allLinks" rows="10" style="width:100%"></textarea><br />
+  <button id="copyAll">Salin Semua Link</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
