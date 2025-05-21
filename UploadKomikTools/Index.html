@@ -1,100 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Upload Komik ke Blogger</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #drop-area { border: 2px dashed #ccc; padding: 20px; text-align: center; }
-    #preview img { max-width: 100px; margin: 5px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Uploader Komik ke Blogger v1.2</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
+  <h1>Uploader Komik ke Blogger v1.2</h1>
 
-<h2>Upload Komik ke Blogger</h2>
+  <div class="controls">
+    <button id="auth">Login Google</button>
+    <button id="toggleDark">Dark Mode</button>
+  </div>
 
-<button id="auth">Login dengan Google</button>
-<div id="drop-area">
-  <p>Drag & drop gambar komik ke sini</p>
-  <input type="file" id="fileElem" multiple accept="image/*">
-</div>
+  <input type="file" id="fileElem" multiple accept=".jpg,.jpeg,.png,.zip" />
+  <div id="drop-area">
+    <p>Drag & Drop gambar atau file ZIP di sini</p>
+  </div>
 
-<div id="preview"></div>
-<button id="uploadBtn">Upload & Posting</button>
+  <div id="preview"></div>
 
-<script>
-const clientId = 'YOUR_CLIENT_ID_HERE';
-const redirectUri = 'http://localhost'; // atau link host kamu
-const scope = 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/drive.file';
-let token = null;
+  <label>Judul Postingan: <input type="text" id="judul" /></label><br />
+  <label>Label (pisahkan dengan koma): <input type="text" id="label" /></label><br />
 
-document.getElementById('auth').onclick = () => {
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
-  window.location.href = url;
-};
+  <label>Format Output:
+    <select id="format">
+      <option value="url">URL</option>
+      <option value="html">HTML &lt;img&gt;</option>
+      <option value="md">Markdown</option>
+    </select>
+  </label><br />
 
-// Ambil token dari URL setelah login
-if (window.location.hash.includes('access_token')) {
-  const params = new URLSearchParams(window.location.hash.substring(1));
-  token = params.get('access_token');
-  document.getElementById('auth').textContent = 'Terautentikasi';
-}
+  <button id="uploadBtn">Upload ke Blogger</button>
 
-let files = [];
-document.getElementById('fileElem').addEventListener('change', (e) => {
-  files = Array.from(e.target.files);
-  const preview = document.getElementById('preview');
-  preview.innerHTML = '';
-  files.forEach((file, index) => {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(file);
-    preview.appendChild(img);
-  });
-});
+  <h3>Log Upload:</h3>
+  <div id="log"></div>
 
-document.getElementById('uploadBtn').addEventListener('click', async () => {
-  if (!token || files.length === 0) return alert('Login dulu dan pilih file');
+  <h3>Semua Link:</h3>
+  <textarea id="allLinks" rows="10" style="width:100%"></textarea><br />
+  <button id="copyAll">Salin Semua Link</button>
 
-  let htmlContent = '';
-  for (let i = 0; i < files.length; i++) {
-    const form = new FormData();
-    form.append('file', files[i]);
-    const upload = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: form
-    });
-    const meta = await upload.json();
-    const fileId = meta.id;
-    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ role: 'reader', type: 'anyone' })
-    });
-    htmlContent += `<img src="https://drive.google.com/uc?id=${fileId}"><br>`;
-  }
-
-  const blogId = 'YOUR_BLOG_ID_HERE';
-  const postRes = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      title: 'Komik Baru',
-      content: htmlContent
-    })
-  });
-
-  const result = await postRes.json();
-  alert(`Sukses! Diposting di: ${result.url}`);
-});
-</script>
-
+  <script src="script.js"></script>
 </body>
 </html>
