@@ -105,7 +105,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 
   document.getElementById('allLinks').value = allLinks;
 
-  const blogId = 'YOUR_BLOG_ID';
+  const blogId = '3600285783247979985';
   const postRes = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/`, {
     method: 'POST',
     headers: {
