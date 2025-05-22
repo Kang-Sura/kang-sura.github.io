@@ -1,4 +1,4 @@
-const clientId = '498675093395-eqfipb1gobnstd52vvscqmdm4mkons6b.apps.googleusercontent.com';
+const clientId = '681912570121-tge4lb5enkhrvtd8tak2s2um7mcl4uoh.apps.googleusercontent.com';
 const redirectUri = 'http://127.0.0.1:5500';
 const scope = 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/drive.file';
 let token = null;
