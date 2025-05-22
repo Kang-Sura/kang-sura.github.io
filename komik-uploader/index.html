@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Uploader Komik ke Blogger v2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* Custom styles that supplement Tailwind */
+    .loader-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #3498db;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .dark .loader-spinner {
+      border-color: rgba(0, 0, 0, 0.3);
+      border-top-color: #3498db;
+    }
+    
+    .preview-item {
+      position: relative;
+      display: inline-block;
+      margin: 0.5rem;
+    }
+    
+    /* Dark mode transitions */
+    .transition-colors {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">Uploader Komik ke Blogger v2.0</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400">Upload gambar komik ke Google Drive dan buat posting blog secara otomatis</p>
+    </header>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-colors">
+      <div class="flex justify-between mb-6">
+        <button id="auth" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 005 10a6 6 0 0012 0c0-.352-.035-.696-.1-1.028A5 5 0 0010 11z" clip-rule="evenodd" />
+          </svg>
+          Login Google
+        </button>
+        
+        <button id="toggleDark" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded transition-colors flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+          Dark Mode
+        </button>
+      </div>
+      
+      <div class="mb-6">
+        <label for="fileElem" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih File Gambar atau ZIP:</label>
+        <input type="file" id="fileElem" multiple accept=".jpg,.jpeg,.png,.zip" class="hidden" />
+        <div id="drop-area" class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p class="text-gray-600 dark:text-gray-400 mb-2">Drag & Drop gambar atau file ZIP di sini</p>
+          <p class="text-gray-500 dark:text-gray-500 text-sm mb-4">Atau</p>
+          <button onclick="document.getElementById('fileElem').click()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+            Pilih File
+          </button>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+        <h3 class="text-lg font-medium mb-4">Preview</h3>
+        <div id="preview" class="flex flex-wrap justify-start gap-2 min-h-12"></div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label for="judul" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Judul Postingan:</label>
+          <input type="text" id="judul" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Masukkan judul postingan" />
+        </div>
+        
+        <div>
+          <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Label (pisahkan dengan koma):</label>
+          <input type="text" id="label" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="komik, manga, dll" />
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <label for="format" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Output:</label>
+        <select id="format" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          <option value="url">URL</option>
+          <option value="html">HTML &lt;img&gt;</option>
+          <option value="md">Markdown</option>
+        </select>
+      </div>
+      
+      <div class="text-center">
+        <button id="uploadBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+          Upload ke Blogger
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-colors">
+      <h3 class="text-lg font-medium mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        Log Upload:
+      </h3>
+      <div id="log" class="bg-gray-50 dark:bg-gray-900 rounded p-4 min-h-24 max-h-64 overflow-y-auto text-sm"></div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
+      <h3 class="text-lg font-medium mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+          <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+        </svg>
+        Semua Link:
+      </h3>
+      <textarea id="allLinks" rows="6" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-4"></textarea>
+      <button id="copyAll" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+          <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
+        </svg>
+        Salin Semua Link
+      </button>
+    </div>
+    
+    <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p>© 2025 Uploader Komik ke Blogger | Dibuat dengan ❤️</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
